@@ -28,8 +28,22 @@ class UrbanNav(nn.Module):
         if self.obs_encoder_type .split("-")[0] == "efficientnet":
             self.obs_encoder = EfficientNet.from_name(self.obs_encoder_type , in_channels=3)
             self.num_obs_features = self.obs_encoder._fc.in_features
+       
+        elif self.obs_encoder_type.startswith("resnet") or self.obs_encoder_type.startswith("vit"):
+
+            model_func = getattr(models, self.obs_encoder_type)
+            obs_encoder = model_func(pretrained=False)
+
+            if self.obs_encoder_type.startswith("resnet"):
+                self.num_obs_features = self.obs_encoder.fc.in_features
+        
+            elif self.obs_encoder_type.startswith("vit"):
+                self.num_obs_features = self.obs_encoder.heads.head.in_features # 768
+                
+        
         else:
             raise NotImplementedError(f"Observation encoder type {self.obs_encoder_type} not implemented")
+
         
         # Coordinate Embedding
         if self.cord_embedding_type == 'polar':
